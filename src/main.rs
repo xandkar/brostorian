@@ -19,8 +19,8 @@ struct Cli {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    historian::tracing::init(cli.log_level, cli.log_color)?;
+    brostorian::tracing::init(cli.log_level, cli.log_color)?;
     tracing::debug!(?cli, "Starting.");
-    historian::chromium::explore(&cli.chromium_hist_db_file).await?;
+    brostorian::chromium::explore(&cli.chromium_hist_db_file).await?;
     Ok(())
 }

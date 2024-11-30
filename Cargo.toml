@@ -1,5 +1,5 @@
 [package]
-name = "historian"
+name = "brostorian"
 version = "0.1.0"
 edition = "2021"
 

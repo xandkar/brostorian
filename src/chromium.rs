@@ -36,29 +36,39 @@ pub async fn explore(hist_db_file: &Path) -> anyhow::Result<()> {
     println!("head={:#?}", head(&pool, 2).await?);
     let mut stream = stream(&pool);
     let mut local_paths = HashMap::new();
-    let mut domains = HashMap::new();
+    let mut domains: HashMap<String, u64> = HashMap::new();
     while let Some(row_result) = stream.next().await {
         let row = row_result?;
         let url = Url::parse(&row.url)?;
+        let visits = u64::try_from(row.visit_count)?;
         match url.domain().map(|d| d.to_string()) {
             None => {
                 tracing::warn!(?row, "Domain could not be parsed.");
                 let path = url.path().to_string();
                 local_paths
                     .entry(path)
-                    .and_modify(|count| *count += 1)
-                    .or_insert(1);
+                    .and_modify(|count| *count += visits)
+                    .or_insert(visits);
             }
             Some(domain) => {
                 domains
                     .entry(domain)
-                    .and_modify(|count| *count += 1)
-                    .or_insert(1);
+                    .and_modify(|count| *count += visits)
+                    .or_insert(visits);
             }
         }
     }
-    println!("domains={domains:#?}");
-    println!("local_paths={local_paths:#?}");
+    let mut domains: Vec<(String, u64)> = domains.into_iter().collect();
+    domains.sort_by_key(|(_, count)| *count);
+    let mut local_paths: Vec<(String, u64)> = local_paths.into_iter().collect();
+    local_paths.sort_by_key(|(_, count)| *count);
+    for (domain, count) in domains {
+        println!("{count} {domain}");
+    }
+    println!();
+    for (path, count) in local_paths {
+        println!("{count} {path}");
+    }
     Ok(())
 }
 

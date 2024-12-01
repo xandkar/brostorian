@@ -61,7 +61,14 @@ pub async fn explore(hist_db_file: &Path) -> anyhow::Result<()> {
     let mut domains: Vec<(String, u64)> = domains.into_iter().collect();
     domains.sort_by_key(|(_, count)| *count);
     let mut local_paths: Vec<(String, u64)> = local_paths.into_iter().collect();
-    local_paths.sort_by_key(|(_, count)| *count);
+    local_paths.sort_by(|(a_path, a_count), (b_path, b_count)| {
+        // Order by count, then by path.
+        if a_count == b_count {
+            b_path.cmp(a_path)
+        } else {
+            a_count.cmp(b_count)
+        }
+    });
     for (domain, count) in domains {
         println!("{count} {domain}");
     }

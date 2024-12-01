@@ -1,6 +1,6 @@
-use std::{collections::HashMap, path::Path, pin::Pin, time::Duration};
+use std::{collections::HashMap, path::Path, time::Duration};
 
-use futures::{stream, Stream, StreamExt};
+use futures::{Stream, StreamExt};
 use url::Url;
 
 // CREATE TABLE urls(

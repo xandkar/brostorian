@@ -14,6 +14,10 @@ struct Cli {
     /// Default assumes a local copy of the file, since original could be locked.
     #[clap(short = 'd', long = "hist-db", default_value = "data/History")]
     chromium_hist_db_file: PathBuf,
+
+    /// How many top-scoring items to show? Top N domains, URLs, etc.
+    #[clap(short, long = "top", default_value_t = 10)]
+    top_n: usize,
 }
 
 #[tokio::main]
@@ -21,6 +25,6 @@ async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     brostorian::tracing::init(cli.log_level, cli.log_color)?;
     tracing::debug!(?cli, "Starting.");
-    brostorian::chromium::explore(&cli.chromium_hist_db_file).await?;
+    brostorian::chromium::explore(&cli.chromium_hist_db_file, cli.top_n).await?;
     Ok(())
 }

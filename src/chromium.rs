@@ -40,9 +40,13 @@ pub async fn explore(hist_db_file: &Path, top_n: usize) -> anyhow::Result<()> {
     let mut stream = stream(&pool);
     let mut local_paths: HashMap<String, u64> = HashMap::new();
     let mut domains: HashMap<String, u64> = HashMap::new();
+    let mut urls: HashMap<String, u64> = HashMap::new();
     while let Some(row_result) = stream.next().await {
         let row = row_result?;
         let visits = u64::try_from(row.visit_count)?;
+        urls.entry(row.url.clone())
+            .and_modify(|count| *count += visits)
+            .or_insert(visits);
         let url = Url::parse(&row.url)?;
         match url.domain().map(|d| d.to_string()) {
             None => {
@@ -60,6 +64,8 @@ pub async fn explore(hist_db_file: &Path, top_n: usize) -> anyhow::Result<()> {
             }
         }
     }
+    let mut urls: Vec<(String, u64)> = urls.into_iter().collect();
+    urls.sort_by(|(_, a_count), (_, b_count)| b_count.cmp(a_count));
     let mut domains: Vec<(String, u64)> = domains.into_iter().collect();
     domains.sort_by(|(_, a_count), (_, b_count)| b_count.cmp(a_count));
     let mut local_paths: Vec<(String, u64)> = local_paths.into_iter().collect();
@@ -73,6 +79,7 @@ pub async fn explore(hist_db_file: &Path, top_n: usize) -> anyhow::Result<()> {
     });
 
     print_counts("domains", domains.into_iter(), top_n);
+    print_counts("URLs", urls.into_iter(), top_n);
     print_counts("local paths", local_paths.into_iter(), top_n);
 
     Ok(())
